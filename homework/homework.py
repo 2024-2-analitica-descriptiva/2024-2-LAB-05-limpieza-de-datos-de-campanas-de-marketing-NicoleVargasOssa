@@ -10,60 +10,65 @@ import glob
 import pandas as pd
 import zipfile
 
-#Entrada
-def clean_camping_data():
-    input= "files.input"
-    #Creado
-    os.makedirs("files/output", exist_ok= True)
+def clean_campaign_data():
+    # Entrada
+    input_directory = "files/input"
+    #creado
+    os.makedirs("files/output", exist_ok=True)
 
-    #DataFrames
-    clients_csv = pd.DataFrame(columns=["client_id","age","job","marital","education","credit_default","mortage"])
-    compaign_csv = pd.DataFrame(columns=["client_id","number_contacts","contact_duration","previous_campaing_contacts","previous_outcome","campaign_outcome","last_contact_day"])
-    economics_csv = pd.DataFrame(columns=["client_id","const_price_idx","eurobor_three_months"])
+    # DataFrame
+    clients = pd.DataFrame(columns=["client_id", "age", "job", "marital", "education", "credit_default", "mortgage"])
+    campaign = pd.DataFrame(columns=["client_id", "number_contacts", "contact_duration","previous_campaign_contacts", "previous_outcome","campaign_outcome", "last_contact_date"])
+    economics = pd.DataFrame(columns=["client_id", "cons_price_idx", "euribor_three_months"])
 
-    zip_files = glob.glob(f"{input}/*.zip")
+    #Entrada
+    zip_files = glob.glob(f"{input_directory}/*.zip")
     for zip_file in zip_files:
         with zipfile.ZipFile(zip_file, 'r') as z:
             for file_name in z.namelist():
                 with z.open(file_name) as f:
                     DataFrame = pd.read_csv(f, delimiter=",", header=0)
-
-                    print(DataFrame.head(), "\n")
-
-                    #comunes con clientes
+                    
+                    # Visualizar
+                    if len(DataFrame) > 0:
+                        print(DataFrame.head(), "\n")
+                    
+                    # Clients
                     client_columns = clients.columns.intersection(DataFrame.columns)
                     clients = pd.concat([clients, DataFrame[client_columns]], ignore_index=True)
-
-                    #compaign
+                    
+                    # Campaign
                     DataFrame["last_contact_date"] = "2022-" + DataFrame["month"].map(str) + "-" + DataFrame["day"].map(str)
                     campaign_columns = campaign.columns.intersection(DataFrame.columns)
                     campaign = pd.concat([campaign, DataFrame[campaign_columns]], ignore_index=True)
+                    
                     # Economics
                     econ_columns = economics.columns.intersection(DataFrame.columns)
                     economics = pd.concat([economics, DataFrame[econ_columns]], ignore_index=True)
-                    
-                
 
-    ##Cambios
-    #Client
-    clients_csv["job"]= clients_csv["job"].str.replace(".","",regex=False).str.replace("-","_",regex=False)
-    clients_csv["education"]=clients_csv["education"].str.replace(".","_",regex=False).replace("unknown", pd.NA)
-    clients_csv["credit_default"]=clients_csv["credit_default"].map(lambda x: 1 if x == "yes" else 0)
-    clients_csv["mortgage"]= clients_csv["mortage"].map(lambda x: 1 if x == "yes" else 0)
+    # Cambios
+    # Clients
+    clients["job"] = clients["job"].str.replace(".", "", regex=False).str.replace("-", "_", regex=False)
+    clients["education"] = clients["education"].str.replace(".", "_", regex=False).replace("unknown", pd.NA)
+    clients["credit_default"] = clients["credit_default"].map(lambda x: 1 if x == "yes" else 0)
+    clients["mortgage"] = clients["mortgage"].map(lambda x: 1 if x == "yes" else 0)
 
-    #cambios compaign_csv
-    compaign_csv["previous_campaing_contacts"]=compaign_csv["previous_campaing_contacts"].map(lambda x: 1 if x == "yes" else 0)
-    compaign_csv["campaign_outcome"]=compaign_csv["campaign_outcome"].map(lambda x: 1 if x == 1 else 0)
-    compaign_csv["last_contact_day"] = pd.to_datetime(compaign_csv["last_contact_day"], format='%Y-%b-%d')
+    #Cambios
+    # campaign
+    campaign["previous_outcome"] = campaign["previous_outcome"].map(lambda x: 1 if x == "success" else 0)
+    campaign["campaign_outcome"] = campaign["campaign_outcome"].map(lambda x: 1 if x == "yes" else 0)
+    campaign["last_contact_date"] = pd.to_datetime(campaign["last_contact_date"], format='%Y-%b-%d')
 
-
-        #Guardar
-    clients_csv.to_csv("files/output/client.csv", index=False)
+    # Guardar
+    clients.to_csv("files/output/client.csv", index=False)
     campaign.to_csv("files/output/campaign.csv", index=False)
     economics.to_csv("files/output/economics.csv", index=False)
 
 if __name__ == "__main__":
-   clean_camping_data()
+    clean_campaign_data()
+
+
+
 
 
 """
