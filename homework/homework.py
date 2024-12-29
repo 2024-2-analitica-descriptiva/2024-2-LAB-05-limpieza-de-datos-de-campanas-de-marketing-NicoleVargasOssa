@@ -4,9 +4,69 @@ Escriba el codigo que ejecute la accion solicitada.
 
 # pylint: disable=import-outside-toplevel
 
+#librerias
+import os
+import glob
+import pandas as pd
+import zipfile
 
-def clean_campaign_data():
-    """
+#Entrada
+def clean_camping_data():
+    input= "files.input"
+    #Creado
+    os.makedirs("files/output", exist_ok= True)
+
+    #DataFrames
+    clients_csv = pd.DataFrame(columns=["client_id","age","job","marital","education","credit_default","mortage"])
+    compaign_csv = pd.DataFrame(columns=["client_id","number_contacts","contact_duration","previous_campaing_contacts","previous_outcome","campaign_outcome","last_contact_day"])
+    economics_csv = pd.DataFrame(columns=["client_id","const_price_idx","eurobor_three_months"])
+
+    zip_files = glob.glob(f"{input}/*.zip")
+    for zip_file in zip_files:
+        with zipfile.ZipFile(zip_file, 'r') as z:
+            for file_name in z.namelist():
+                with z.open(file_name) as f:
+                    DataFrame = pd.read_csv(f, delimiter=",", header=0)
+
+                    print(DataFrame.head(), "\n")
+
+                    #comunes con clientes
+                    client_columns = clients.columns.intersection(DataFrame.columns)
+                    clients = pd.concat([clients, DataFrame[client_columns]], ignore_index=True)
+
+                    #compaign
+                    DataFrame["last_contact_date"] = "2022-" + DataFrame["month"].map(str) + "-" + DataFrame["day"].map(str)
+                    campaign_columns = campaign.columns.intersection(DataFrame.columns)
+                    campaign = pd.concat([campaign, DataFrame[campaign_columns]], ignore_index=True)
+                    # Economics
+                    econ_columns = economics.columns.intersection(DataFrame.columns)
+                    economics = pd.concat([economics, DataFrame[econ_columns]], ignore_index=True)
+                    
+                
+
+    ##Cambios
+    #Client
+    clients_csv["job"]= clients_csv["job"].str.replace(".","",regex=False).str.replace("-","_",regex=False)
+    clients_csv["education"]=clients_csv["education"].str.replace(".","_",regex=False).replace("unknown", pd.NA)
+    clients_csv["credit_default"]=clients_csv["credit_default"].map(lambda x: 1 if x == "yes" else 0)
+    clients_csv["mortgage"]= clients_csv["mortage"].map(lambda x: 1 if x == "yes" else 0)
+
+    #cambios compaign_csv
+    compaign_csv["previous_campaing_contacts"]=compaign_csv["previous_campaing_contacts"].map(lambda x: 1 if x == "yes" else 0)
+    compaign_csv["campaign_outcome"]=compaign_csv["campaign_outcome"].map(lambda x: 1 if x == 1 else 0)
+    compaign_csv["last_contact_day"] = pd.to_datetime(compaign_csv["last_contact_day"], format='%Y-%b-%d')
+
+
+        #Guardar
+    clients_csv.to_csv("files/output/client.csv", index=False)
+    campaign.to_csv("files/output/campaign.csv", index=False)
+    economics.to_csv("files/output/economics.csv", index=False)
+
+if __name__ == "__main__":
+   clean_camping_data()
+
+
+"""
     En esta tarea se le pide que limpie los datos de una campaña de
     marketing realizada por un banco, la cual tiene como fin la
     recolección de datos de clientes para ofrecerls un préstamo.
@@ -49,8 +109,7 @@ def clean_campaign_data():
 
 
     """
-
-    return
+            
 
 
 if __name__ == "__main__":
